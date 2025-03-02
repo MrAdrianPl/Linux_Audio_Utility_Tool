@@ -14,11 +14,12 @@ if you installed above dependency then you can simply start program using run_la
 and here's how program looks right now
 
 configuration tab:
-![pipewire configuration](/redme_images/LAUT pipewire config.png)
+![pipewire configuration](redme_images/LAUT%20pipewire%20config.png)
 
 devices tab:
-![pipewire devices properties](/redme_images/LAUT devices.png)
+![pipewire devices properties](redme_images/LAUT%20devices.png)
 
+I'm trying to provide as much information in simple manner as possible so if anyone have a idea where i can improve on design to make it more user friendly then let me know
 
 ## Current version of the program allows:
 - Checking current devices properties
