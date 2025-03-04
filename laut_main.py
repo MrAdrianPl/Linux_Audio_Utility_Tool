@@ -275,30 +275,30 @@ class MainWindow(QMainWindow):
                         del properites_list[rsi_s:rsi_e+1]
 
                     return dict( list(map(str.strip,propert.split('='))) for propert in properites_list if len(propert.split('=')) > 1 )
-        elif ConfigExitsCheck(configuration) is True:
-            prefix = GetConfigurationPath()
-            data = LoadPwJson(prefix,configuration)
-            if configuration == 'pipewire.conf':
-                properites_list = data[1]
+            elif ConfigExitsCheck(configuration) is True:
+                prefix = GetConfigurationPath()
+                data = LoadPwJson(prefix,configuration)
+                if configuration == 'pipewire.conf':
+                    properites_list = data[1]
 
-                if properites_list.count('vm.overrides = {')>0 :
-                    rsi_s = properites_list.index('vm.overrides = {')
-                    rsi_e = properites_list.index('}')
+                    if properites_list.count('vm.overrides = {')>0 :
+                        rsi_s = properites_list.index('vm.overrides = {')
+                        rsi_e = properites_list.index('}')
 
-                    del properites_list[rsi_s:rsi_e+1]
+                        del properites_list[rsi_s:rsi_e+1]
 
-                return dict( list(map(str.strip,propert.split('='))) for propert in properites_list if len(propert.split('=')) > 1 )
-        else:
-            parameters_list = {  
-                'default.clock.rate': "48000"
-                ,'default.clock.allowed-rates': "[ 44100 48000 88200 96000 176400 192000 352800 384000 ]"
-                ,'default.clock.quantum': "2048"
-                ,'default.clock.min-quantum': "512"
-                ,'default.clock.max-quantum': "4096"
-                ,'default.clock.quantum-limit': "8192" 
-                ,'max-buffers': "16"
-            }
-            return parameters_list
+                    return dict( list(map(str.strip,propert.split('='))) for propert in properites_list if len(propert.split('=')) > 1 )
+            else:
+                parameters_list = {  
+                    'default.clock.rate': "48000"
+                    ,'default.clock.allowed-rates': "[ 44100 48000 88200 96000 176400 192000 352800 384000 ]"
+                    ,'default.clock.quantum': "2048"
+                    ,'default.clock.min-quantum': "512"
+                    ,'default.clock.max-quantum': "4096"
+                    ,'default.clock.quantum-limit': "8192" 
+                    ,'max-buffers': "16"
+                }
+                return parameters_list
 
     def SaveConfigurationForPipewire(self):
         testing_prefix = '/media/mradrian/VMEnv/Python Programs/file_tests'
