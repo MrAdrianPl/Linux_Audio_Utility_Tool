@@ -259,29 +259,33 @@ class MainWindow(QMainWindow):
     #Cross File Methods
 
     def LoadConfigurationFromFile(self,configuration):
-        if subConfigExitsCheck(configuration):
-            prefix = GetConfigurationPath()
-            prefix = prefix + 'pipewire.conf.d/'
-            data = LoadPwJson(prefix,configuration)
-            if configuration == 'pipewire.conf':
-                properites_list = data[1]
+        if configuration == 'pipewire.conf':
+            sub_configuration = 'pipewire_basic_properties.conf'
+            if subConfigExitsCheck(sub_configuration):
+                prefix = GetConfigurationPath()
+                prefix = prefix + 'pipewire.conf.d/'
+                data = LoadPwJson(prefix,sub_configuration)
+                if configuration == 'pipewire.conf':
+                    properites_list = data[1]
 
-                rsi_s = properites_list.index('vm.overrides = {')
-                rsi_e = properites_list.index('}')
+                    if properites_list.count('vm.overrides = {')>0 :
+                        rsi_s = properites_list.index('vm.overrides = {')
+                        rsi_e = properites_list.index('}')
 
-                del properites_list[rsi_s:rsi_e+1]
+                        del properites_list[rsi_s:rsi_e+1]
 
-                return dict( list(map(str.strip,propert.split('='))) for propert in properites_list if len(propert.split('=')) > 1 )
+                    return dict( list(map(str.strip,propert.split('='))) for propert in properites_list if len(propert.split('=')) > 1 )
         elif ConfigExitsCheck(configuration) is True:
             prefix = GetConfigurationPath()
             data = LoadPwJson(prefix,configuration)
             if configuration == 'pipewire.conf':
                 properites_list = data[1]
 
-                rsi_s = properites_list.index('vm.overrides = {')
-                rsi_e = properites_list.index('}')
+                if properites_list.count('vm.overrides = {')>0 :
+                    rsi_s = properites_list.index('vm.overrides = {')
+                    rsi_e = properites_list.index('}')
 
-                del properites_list[rsi_s:rsi_e+1]
+                    del properites_list[rsi_s:rsi_e+1]
 
                 return dict( list(map(str.strip,propert.split('='))) for propert in properites_list if len(propert.split('=')) > 1 )
         else:
