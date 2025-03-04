@@ -1,4 +1,5 @@
 import sys
+import os
 from PyQt6.QtCore import QSize,Qt
 from PyQt6.QtWidgets import (QApplication
                              ,QMainWindow
@@ -115,13 +116,13 @@ class MainWindow(QMainWindow):
         pipewire_data = self.LoadConfigurationFromFile('pipewire.conf')
         
         ###get Config Values###
-        SampleRateLoaded = pipewire_data['default.clock.rate']
-        AllowedRatesLoaded = pipewire_data['default.clock.allowed-rates']
-        QuantumDefLoaded = pipewire_data['default.clock.quantum']
-        QuantumMinLoaded = pipewire_data['default.clock.min-quantum']
-        QuandumMaxLoaded = pipewire_data['default.clock.max-quantum']
-        QuantumLimitLoaded = pipewire_data['default.clock.quantum-limit']
-        LinkBuffersLoaded = pipewire_data['link.max-buffers']
+        SampleRateLoaded = pipewire_data['default.clock.rate'] if pipewire_data.get('default.clock.rate') is not None else "48000"
+        AllowedRatesLoaded = pipewire_data['default.clock.allowed-rates'] if pipewire_data.get('default.clock.allowed-rates') is not None else "[ 44100 48000 88200 96000 176400 192000 352800 384000 ]"
+        QuantumDefLoaded = pipewire_data['default.clock.quantum'] if pipewire_data.get('default.clock.quantum') is not None else "2048"
+        QuantumMinLoaded = pipewire_data['default.clock.min-quantum'] if pipewire_data.get('default.clock.min-quantum') is not None else "512"
+        QuandumMaxLoaded = pipewire_data['default.clock.max-quantum'] if pipewire_data.get('default.clock.max-quantum') is not None else "4096"
+        QuantumLimitLoaded = pipewire_data['default.clock.quantum-limit'] if pipewire_data.get('default.clock.quantum-limit') is not None else "8192" 
+        LinkBuffersLoaded = pipewire_data['link.max-buffers'] if pipewire_data.get('link.max-buffers') is not None else "16"
 
         main_header_pw = StandardLableTemplate(laut_text.main_header_pipewire_txt,QSize(300, 40))
         main_header_pw.setProperty("class","Settings_Header")
@@ -296,13 +297,13 @@ class MainWindow(QMainWindow):
                     ,'default.clock.min-quantum': "512"
                     ,'default.clock.max-quantum': "4096"
                     ,'default.clock.quantum-limit': "8192" 
-                    ,'max-buffers': "16"
+                    ,'link.max-buffers': "16"
                 }
                 return parameters_list
 
     def SaveConfigurationForPipewire(self):
         testing_prefix = '/media/mradrian/VMEnv/Python Programs/file_tests'
-        working_prefix = GetConfigurationPath() + 'pipewire.conf.d/'
+        working_prefix = GetConfigurationPath() + 'pipewire.conf.d'
         SampleRate = laut_events.SampleRate if hasattr(laut_events,"SampleRate") else "48000"
         SampleAllowedRates = laut_events.SampleAllowedRates if hasattr(laut_events,"SampleAllowedRates") else "[ 44100 48000 88200 96000 176400 192000 352800 384000 ]"
         QuantumRate = laut_events.QuantumRate if hasattr(laut_events,"QuantumRate") else "2048"
@@ -323,6 +324,10 @@ class MainWindow(QMainWindow):
 
 
         to_be_saved = CreateConfigFilePipeWire(parameters_list)
+
+        if not os.path.exists(working_prefix):
+            os.makedirs(working_prefix)
+
         with open(working_prefix + '/pipewire_basic_properties.conf', 'w') as file:
             file.write(to_be_saved)
 
