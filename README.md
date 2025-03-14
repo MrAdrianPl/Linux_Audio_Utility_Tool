@@ -8,13 +8,27 @@ current version dose not have options for configuring Pipewire-pulse, Pipewire-j
 this program is in its early stages of development so please understand it may be buggy
 
 ## dependencies
-to run program you'll need to install pipewire_python package
+to run program you'll need to install pipewire_python package and pyqt6
 
 ``pip install pipewire_python``
+
+``pip install PyQt6``
 
 or 
 
 ``pip3 install pipewire_python``
+
+``pip3 install PyQt6``
+
+
+you might also need to install request module
+
+``pip install requests``
+
+or 
+
+``pip3 install requests``
+
 
 after reaching stable satisfactory version i plan to make an Appimage version which will come without any additional requirements 
 

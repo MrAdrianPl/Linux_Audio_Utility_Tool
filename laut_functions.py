@@ -53,12 +53,16 @@ def ConfigExitsCheck(config_name:str):
     prefix = GetConfigurationPath()
     return os.path.isfile( prefix + config_name )
 
-def subConfigExitsCheck(sub_config_name:str):
+def subConfigExitsCheck(sub_config_name:str,config_extra):
     prefix = GetConfigurationPath()
-    config_extra = 'pipewire.conf.d/'
+
     return os.path.isfile( prefix + config_extra + sub_config_name )
 
-
+def my_coalesce(*arg):
+  for el in arg:
+    if el is not None:
+      return el
+  return None
 
 def RestartPWServices():
     active_wireplumber = os.popen('systemctl --user status wireplumber').read()

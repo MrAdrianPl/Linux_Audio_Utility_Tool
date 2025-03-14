@@ -25,8 +25,9 @@ from laut_functions import (GetPWVersion
                             ,ConfigExitsCheck
                             ,RestartPWServices
                             ,subConfigExitsCheck
-                            ,GetMostUpToDateVersion)
-from laut_files_handling import LoadPwJson,CreateConfigFilePipeWire
+                            ,GetMostUpToDateVersion
+                            ,my_coalesce)
+from laut_files_handling import LoadPwJson,CreateConfigFilePipeWire,CreateConfigFilePipeWirePulse
 import laut_text
 import laut_events
 
@@ -124,6 +125,7 @@ class MainWindow(QMainWindow):
         QuantumLimitLoaded = pipewire_data['default.clock.quantum-limit'] if pipewire_data.get('default.clock.quantum-limit') is not None else "8192" 
         LinkBuffersLoaded = pipewire_data['link.max-buffers'] if pipewire_data.get('link.max-buffers') is not None else "16"
 
+
         main_header_pw = StandardLableTemplate(laut_text.main_header_pipewire_txt,QSize(300, 40))
         main_header_pw.setProperty("class","Settings_Header")
 
@@ -175,16 +177,90 @@ class MainWindow(QMainWindow):
     def pipewire_pulse_panel(self):
         #add warning icon with tooltip about above settings\
         
+        pipewire_pulse_data = self.LoadConfigurationFromFile('pipewire-pulse.conf')
+        
+        ###get Config Values###
+
+
+        SampleRateLoadedPulse = (
+                            my_coalesce(
+                                        pipewire_pulse_data.get('pulse.min.req')
+                                    ,pipewire_pulse_data.get('pulse.default.req')
+                                    ,pipewire_pulse_data.get('pulse.min.frag')
+                                    ,pipewire_pulse_data.get('pulse.default.frag')
+                                    ,pipewire_pulse_data.get('pulse.default.tlength')
+                                    ,pipewire_pulse_data.get('pulse.min.quantum')
+                            )
+                            )
+          
+        try: 
+            if SampleRateLoadedPulse is None:
+                SampleRateLoadedPulse = "48000"
+            else:
+                SampleRateLoadedPulse = SampleRateLoadedPulse.split('/')[1]
+        except IndexError:
+            SampleRateLoadedPulse = "48000"
+            print('Malformed Pipewire-Pulse Configuration')
+
+        PulseRequestMin = pipewire_pulse_data.get('pulse.min.req').split('/')[0] if pipewire_pulse_data.get('pulse.min.req') is not None else "128"
+        PulseRequestDef = pipewire_pulse_data.get('pulse.default.req').split('/')[0] if pipewire_pulse_data.get('pulse.default.req') is not None else "960"
+        PulseFragMin = pipewire_pulse_data.get('pulse.min.frag').split('/')[0] if pipewire_pulse_data.get('pulse.min.frag') is not None else "128"
+        PulseFragDef = pipewire_pulse_data.get('pulse.default.frag').split('/')[0] if pipewire_pulse_data.get('pulse.default.frag') is not None else "96000"
+        PulseTLenDef = pipewire_pulse_data.get('pulse.default.tlength').split('/')[0] if pipewire_pulse_data.get('pulse.default.tlength') is not None else "96000"
+        PulseQuantumMin = pipewire_pulse_data.get('pulse.min.quantum').split('/')[0] if pipewire_pulse_data.get('pulse.min.quantum') is not None else "128"
+        PulseNodesLatency = pipewire_pulse_data.get('node.latency').split('/')[0] if pipewire_pulse_data.get('node.latency') is not None else "1024"
+        PulseResamplingQuality = pipewire_pulse_data.get('resample.quality') if pipewire_pulse_data.get('resample.quality') is not None else "6"
+        PulseIdleTimeout = pipewire_pulse_data.get('pulse.idle.timeout') if pipewire_pulse_data.get('pulse.idle.timeout') is not None else "0"
+        PulseDefFormat = pipewire_pulse_data.get('pulse.default.format') if pipewire_pulse_data.get('pulse.default.format') is not None else "F32"
+        PulseDefPosition = pipewire_pulse_data.get('pulse.default.position') if pipewire_pulse_data.get('pulse.default.position') is not None else "[FL FR]"
+
+        ###GUI###
+
         main_header_pulse = StandardLableTemplate(laut_text.main_header_pulse_txt,QSize(300, 40))
         main_header_pulse.setProperty("class","Settings_Header")
-        Main_Layer = QVBoxLayout()
-        Main_Layer.addWidget(main_header_pulse,alignment=Qt.AlignmentFlag.AlignTop)
-        #Main_Layer.addLayout(StandardDropdownTemplate('Resampling Quality:',['1','2','3','4','5','6','7','8','9','10'],self.SetSampleRateValue,'6'))
-        #pipewrie pulse latency
-        #Pulse Quantum
-        #Pulse samples
+        Main_Layout = QVBoxLayout()
+        Main_Layout.addWidget(main_header_pulse,alignment=Qt.AlignmentFlag.AlignTop)
+
+        Lable_space = QHBoxLayout()
+        
+        Lable_space.addWidget(StandardLableTemplate(laut_text.label_pulse_samples_header,QSize(120, 50)))
+        Lable_space.addWidget(info_icon(36,36,laut_text.pulse_samples_header_tooltip),alignment=Qt.AlignmentFlag.AlignAbsolute)        
+        Main_Layout.addLayout(Lable_space)
+
+        Main_Layout.addLayout(StandardDropdownTemplate(laut_text.label_sample_rate,['16000','32000','44100','48000','88200','96000','176400','192000','352800','384000'],laut_events.SetPulseSample,SampleRateLoadedPulse,laut_text.pulse_sample_rate_tooltip_text))
+        
+        Lable_space2 = QHBoxLayout()
+        
+        Lable_space2.addWidget(StandardLableTemplate(laut_text.label_stream_props,QSize(120, 50)))
+        Lable_space2.addWidget(info_icon(36,36,laut_text.stream_props_tooltip),alignment=Qt.AlignmentFlag.AlignAbsolute)        
+        Main_Layout.addLayout(Lable_space2)
+ 
+        Main_Layout.addLayout(StandardDropdownTemplate(laut_text.label_nodes_latency_tooltip_text,['64','128','256','512','1024','2048','4096','8192','16384'],laut_events.SetPulseNodesLatency,PulseNodesLatency,laut_text.pulse_nodes_latency_tooltip_text))
+        Main_Layout.addLayout(StandardDropdownTemplate(laut_text.label_resampling_quality_tooltip_text,['1','2','3','4','5','6','7','8','9','10'],laut_events.SetPulseResamplingQuality,PulseResamplingQuality,laut_text.pulse_resampling_quality_tooltip_text))
+        Lable_space3 = QHBoxLayout()
+        
+        Lable_space3.addWidget(StandardLableTemplate(laut_text.label_buffer_settings,QSize(120, 50)))
+        Lable_space3.addWidget(info_icon(36,36,laut_text.buffer_settings_tooltip),alignment=Qt.AlignmentFlag.AlignAbsolute)        
+        Main_Layout.addLayout(Lable_space3)
+
+        Main_Layout.addLayout(StandardDropdownTemplate(laut_text.label_req_min_tooltip_text,['64','128','256','512','1024','2048','4096','8192','16384'],laut_events.SetPulseFragMin,PulseRequestMin,laut_text.pulse_req_min_tooltip_text))
+        Main_Layout.addLayout(StandardDropdownTemplate(laut_text.label_req_def_tooltip_text,['360','480','960','1440','1920','2520','7680','15360'],laut_events.SetPulseFragDef,PulseRequestDef,laut_text.pulse_req_def_tooltip_text))
+        Main_Layout.addLayout(StandardDropdownTemplate(laut_text.label_frag_min_tooltip_text,['64','128','256','512','1024','2048','4096','8192','16384'],laut_events.SetPulseReqMin,PulseFragMin,laut_text.pulse_frag_min_tooltip_text))
+        Main_Layout.addLayout(StandardDropdownTemplate(laut_text.label_frag_def_tooltip_text,['16000','32000','44100','48000','88200','96000','176400','192000','352800','384000'],laut_events.SetPulseReqDef,PulseFragDef,laut_text.pulse_frag_def_tooltip_text))
+        Main_Layout.addLayout(StandardDropdownTemplate(laut_text.label_tlen_tooltip_text,['16000','32000','44100','48000','88200','96000','176400','192000','352800','384000'],laut_events.SetPulseQuantMin,PulseTLenDef,laut_text.pulse_tlen_tooltip_text))
+        Main_Layout.addLayout(StandardDropdownTemplate(laut_text.label_pulsequantummin_tooltip_text,['64','128','256','512','1024','2048','4096','8192','16384'],laut_events.SetPulseTLen,PulseQuantumMin,laut_text.pulse_pulsequantummin_tooltip_text))
+        Lable_space4 = QHBoxLayout()
+
+        Lable_space4.addWidget(StandardLableTemplate(laut_text.label_pulse_other_settings,QSize(120, 50)))
+        Lable_space4.addWidget(info_icon(36,36,laut_text.pulse_other_settings_tooltip),alignment=Qt.AlignmentFlag.AlignAbsolute)        
+        Main_Layout.addLayout(Lable_space4)
+        
+        Main_Layout.addLayout(StandardDropdownTemplate(laut_text.label_def_format_tooltip_text,['U8','S16','S16LE','S24','S24LE','F32','F32LE'],laut_events.SetPulseDefaultFormat,PulseDefFormat,laut_text.pulse_def_format_tooltip_text))
+        Main_Layout.addLayout(StandardInputTemplate(laut_text.label_def_position_tooltip_text,QSize(84, 28),laut_events.SetPulseDefaultPositon,PulseDefPosition,laut_text.pulse_def_position_tooltip_text))
+        Main_Layout.addLayout(StandardInputTemplate(laut_text.label_idle_timeout_tooltip_text,QSize(42, 28),laut_events.SetPulseIdleTimeout,PulseIdleTimeout,laut_text.pulse_idle_timeout_tooltip_text))
+
         main_header_pulse.setAlignment(Qt.AlignmentFlag.AlignCenter) 
-        return Main_Layer   
+        return Main_Layout   
  
     def pipewire_jack_panel(self):
         main_header_jack = StandardLableTemplate(laut_text.main_header_pipewire_txt,QSize(300, 40))
@@ -262,12 +338,12 @@ class MainWindow(QMainWindow):
     def LoadConfigurationFromFile(self,configuration):
         if configuration == 'pipewire.conf':
             sub_configuration = 'pipewire_basic_properties.conf'
-            if subConfigExitsCheck(sub_configuration):
+            if subConfigExitsCheck(sub_configuration,'pipewire.conf.d/'):
                 prefix = GetConfigurationPath()
                 prefix = prefix + 'pipewire.conf.d/'
                 data = LoadPwJson(prefix,sub_configuration)
                 if configuration == 'pipewire.conf':
-                    properites_list = data[1]
+                    properites_list = data[data.index('context.properties')+1]
 
                     if properites_list.count('vm.overrides = {')>0 :
                         rsi_s = properites_list.index('vm.overrides = {')
@@ -280,7 +356,7 @@ class MainWindow(QMainWindow):
                 prefix = GetConfigurationPath()
                 data = LoadPwJson(prefix,configuration)
                 if configuration == 'pipewire.conf':
-                    properites_list = data[1]
+                    properites_list = data[data.index('context.properties')+1]
 
                     if properites_list.count('vm.overrides = {')>0 :
                         rsi_s = properites_list.index('vm.overrides = {')
@@ -289,17 +365,41 @@ class MainWindow(QMainWindow):
                         del properites_list[rsi_s:rsi_e+1]
 
                     return dict( list(map(str.strip,propert.split('='))) for propert in properites_list if len(propert.split('=')) > 1 )
-            else:
-                parameters_list = {  
-                    'default.clock.rate': "48000"
-                    ,'default.clock.allowed-rates': "[ 44100 48000 88200 96000 176400 192000 352800 384000 ]"
-                    ,'default.clock.quantum': "2048"
-                    ,'default.clock.min-quantum': "512"
-                    ,'default.clock.max-quantum': "4096"
-                    ,'default.clock.quantum-limit': "8192" 
-                    ,'link.max-buffers': "16"
-                }
-                return parameters_list
+
+        if configuration == 'pipewire-pulse.conf':
+            sub_configuration = 'pipewire-pulse_basic_properties.conf'
+            if subConfigExitsCheck(sub_configuration,'pipewire-pulse.conf.d/'):
+                prefix = GetConfigurationPath()
+                prefix = prefix + 'pipewire-pulse.conf.d/'
+                data = LoadPwJson(prefix,sub_configuration)
+                stream_properties = data[data.index('stream.properties')+1]
+                pulse_properties = data[data.index('pulse.properties')+1]
+
+                if pulse_properties.count('vm.overrides = {')>0 :
+                    rsi_s = pulse_properties.index('vm.overrides = {')
+                    rsi_e = pulse_properties.index('}')
+
+                    del pulse_properties[rsi_s:rsi_e+1]       
+                
+                properites_list = pulse_properties + stream_properties
+
+                return dict( list(map(str.strip,propert.split('='))) for propert in properites_list if len(propert.split('=')) > 1 ) 
+            elif ConfigExitsCheck(configuration) is True:    
+                prefix = GetConfigurationPath()
+                data = LoadPwJson(prefix,configuration)
+                stream_properties = data[data.index('stream.properties')+1]
+                pulse_properties = data[data.index('pulse.properties')+1]
+
+                if pulse_properties.count('vm.overrides = {')>0 :
+                    rsi_s = pulse_properties.index('vm.overrides = {')
+                    rsi_e = pulse_properties.index('}')
+
+                    del pulse_properties[rsi_s:rsi_e+1]       
+                
+                properites_list = pulse_properties + stream_properties
+
+                return dict( list(map(str.strip,propert.split('='))) for propert in properites_list if len(propert.split('=')) > 1 )                 
+
 
     def SaveConfigurationForPipewire(self):
         testing_prefix = '/media/mradrian/VMEnv/Python Programs/file_tests'
@@ -331,10 +431,54 @@ class MainWindow(QMainWindow):
         with open(working_prefix + '/pipewire_basic_properties.conf', 'w') as file:
             file.write(to_be_saved)
 
+    def SaveConfigurationForPipewirePulse(self):
+        testing_prefix = '/media/mradrian/VMEnv/Python Programs/file_tests'
+        working_prefix = GetConfigurationPath() + 'pipewire-pulse.conf.d/'
+        PulseSample = laut_events.PulseSample if hasattr(laut_events,"PulseSample") else "48000"
+        PulseFragMin = laut_events.PulseFragMin if hasattr(laut_events,"PulseFragMin") else "128"
+        PulseFragDef = laut_events.PulseFragDef if hasattr(laut_events,"PulseFragDef") else "960"
+        PulseReqMin = laut_events.PulseReqMin if hasattr(laut_events,"PulseReqMin") else "128"
+        PulseReqDef = laut_events.PulseReqDef if hasattr(laut_events,"PulseReqDef") else "96000"
+        PulseQuantMin = laut_events.PulseQuantMin if hasattr(laut_events,"PulseQuantMin") else "96000"
+        PulseTLen = laut_events.PulseTLen if hasattr(laut_events,"PulseTLen") else "128"
+        PulseNodesLatency = laut_events.PulseNodesLatency if hasattr(laut_events,"PulseNodesLatency") else "1024" 
+        PulseResamplingQuality = laut_events.PulseResamplingQuality if hasattr(laut_events,"PulseResamplingQuality") else "6" 
+        PulseDefaultFormat = laut_events.PulseDefaultFormat if hasattr(laut_events,"PulseDefaultFormat") else "F32" 
+        PulseDefaultPositon = laut_events.PulseDefaultPositon if hasattr(laut_events,"PulseDefaultPositon") else "[FR FL]" 
+        PulseIdleTimeout = laut_events.PulseIdleTimeout if hasattr(laut_events,"PulseIdleTimeout") else "0" 
+        
+
+        parameters_list = {  
+             'arbitrary-sampling-param': PulseSample
+            ,'pulse-min-req': PulseFragMin
+            ,'pulse-default-req': PulseFragDef
+            ,'pulse-min-frag': PulseReqMin
+            ,'pulse-default-frag': PulseReqDef
+            ,'pulse-default-tlength': PulseQuantMin
+            ,'pulse-min-quantum': PulseTLen
+            ,'node-latency-param': PulseNodesLatency
+            ,'resample-quality-param': PulseResamplingQuality
+            ,'pulse-idle-timeout': PulseDefaultFormat
+            ,'pulse-default-format': PulseDefaultPositon
+            ,'pulse-default-position': PulseIdleTimeout
+        }
+
+        to_be_saved = CreateConfigFilePipeWirePulse(parameters_list)
+
+        if not os.path.exists(working_prefix):
+            os.makedirs(working_prefix)
+
+        with open(working_prefix + '/pulse_basic_properties.conf', 'w') as file:
+            file.write(to_be_saved)
+
+
+
+
 
     ### Actions
     def SaveCurrentConfig(self):
         self.SaveConfigurationForPipewire()
+        self.SaveConfigurationForPipewirePulse()
     def RefreshCurrentDevices():
         pass    
     def ApplyConfiguration(self):
@@ -344,6 +488,7 @@ class MainWindow(QMainWindow):
         self.Pipewire_Configuration_Tab().update()
     def SaveConfiguration(self):
         self.SaveCurrentConfig()
+        
 
 
     ### Initialize ###

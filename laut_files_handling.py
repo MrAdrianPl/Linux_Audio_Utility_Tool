@@ -69,6 +69,29 @@ def findMatchingSettings(input_list):
         
         return 
 
+def CreateConfigFilePipeWirePulse(params_list:dict):
+        template = f"""
+        stream.properties = {{                         
+        
+        node.latency =          { params_list["node-latency-param"] }
+        resample.quality =      { params_list["resample-quality-param"] }
+
+        }}
+        pulse.properties = {{
+                pulse.min.req =         { params_list["pulse-min-req"] }/{ params_list["arbitrary-sampling-param"] }
+                pulse.default.req =     { params_list["pulse-default-req"] }/{ params_list["arbitrary-sampling-param"] }
+                pulse.min.frag =        { params_list["pulse-min-frag"] }/{ params_list["arbitrary-sampling-param"] }
+                pulse.default.frag =    { params_list["pulse-default-frag"] }/{ params_list["arbitrary-sampling-param"] }
+                pulse.default.tlength = { params_list["pulse-default-tlength"] }/{ params_list["arbitrary-sampling-param"] }
+                pulse.min.quantum =     { params_list["pulse-min-quantum"] }/{ params_list["arbitrary-sampling-param"] }
+                pulse.idle.timeout =    { params_list["pulse-idle-timeout"] }
+                pulse.default.format =  { params_list["pulse-default-format"] }
+                pulse.default.position = { params_list["pulse-default-position"] }
+        }}
+        """
+        return template
+
+
         #os.path.isfile( home_path + '/.config/pipewire/pipewire-pulse.conf')
         #os.path.isfile( home_path + '/.config/pipewire/pipewire-avb.conf')
         #os.path.isfile( home_path + '/.config/pipewire/jack.conf')
