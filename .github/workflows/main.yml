@@ -1,0 +1,42 @@
+name: Build AppImage
+
+run-name: Building Appimage
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: list
+      working-directory: ${{github.workspace}}
+      run : ls
+    
+    - name: install python dependencies to project folder
+      working-directory: ${{github.workspace}}
+      run : python3 -m pip install --ignore-installed --prefix=/usr --root=AppDir -r ./requirements.txt
+
+    - name: Build AppImage
+      uses: AppImageCrafters/build-appimage-action@master
+      env:
+        UPDATE_INFO: gh-releases-zsync|cgspeck|brewtarget|latest|*x86_64.AppImage.zsync
+      with:
+        recipe: build-scripts/AppImageBuilder.yml     
+    
+    - uses: actions/upload-artifact@v4
+      with:
+        name: LAUT
+        path: './*.AppImage*'
+    
+    - uses: xresloader/upload-to-github-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.LAUT_UPLOAD_TOKEN }}
+      with:
+        file: './*.AppImage*'
+        tags: true
+        draft: false        

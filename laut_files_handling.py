@@ -3,7 +3,7 @@ def LoadPwJson(prefix,configuration):
 
     file_data_str = ""
     with open(prefix + configuration, 'r') as file:
-            stripped_lines = (line.rstrip() for line in file) 
+            stripped_lines = (line.rstrip() for line in file)
             for lines in stripped_lines:
                     if not lines.lstrip().startswith('#') and lines:
                             file_data_str +=(lines.split('#')[0] + '\n')
@@ -51,7 +51,7 @@ def LoadPwJson(prefix,configuration):
 def CreateConfigFilePipeWire(params_list:dict):
         template = f"""
         context.properties = {{
-        link.max-buffers = { params_list["max-buffers"] or 16 }                             
+        link.max-buffers = { params_list["max-buffers"] or 16 }
         default.clock.rate          = { params_list["clock-rate"] }
         default.clock.allowed-rates = { params_list["allowed-rates"] }
         default.clock.quantum       = { params_list["quantum-def"] }
@@ -66,30 +66,90 @@ def findMatchingSettings(input_list):
         occ_index = [ index for index,content in enumerate(input_list) if content.startswith('matches = [') ]
         start_index = [ index - 1 for index in occ_index ]
         end_index = [index for index,content in enumerate(input_list) if content == '}' and index in occ_index ]
-        
-        return 
+
+        return
 
 def CreateConfigFilePipeWirePulse(params_list:dict):
         template = f"""
-        stream.properties = {{                         
-        
+        stream.properties = {{
+
         node.latency =          { params_list["node-latency-param"] }
         resample.quality =      { params_list["resample-quality-param"] }
 
         }}
         pulse.properties = {{
-                pulse.min.req =         { params_list["pulse-min-req"] }/{ params_list["arbitrary-sampling-param"] }
-                pulse.default.req =     { params_list["pulse-default-req"] }/{ params_list["arbitrary-sampling-param"] }
-                pulse.min.frag =        { params_list["pulse-min-frag"] }/{ params_list["arbitrary-sampling-param"] }
-                pulse.default.frag =    { params_list["pulse-default-frag"] }/{ params_list["arbitrary-sampling-param"] }
-                pulse.default.tlength = { params_list["pulse-default-tlength"] }/{ params_list["arbitrary-sampling-param"] }
-                pulse.min.quantum =     { params_list["pulse-min-quantum"] }/{ params_list["arbitrary-sampling-param"] }
-                pulse.idle.timeout =    { params_list["pulse-idle-timeout"] }
-                pulse.default.format =  { params_list["pulse-default-format"] }
-                pulse.default.position = { params_list["pulse-default-position"] }
+                pulse.min.req           = { params_list["pulse-min-req"] }/{ params_list["arbitrary-sampling-param"] }
+                pulse.default.req       = { params_list["pulse-default-req"] }/{ params_list["arbitrary-sampling-param"] }
+                pulse.min.frag          = { params_list["pulse-min-frag"] }/{ params_list["arbitrary-sampling-param"] }
+                pulse.default.frag      = { params_list["pulse-default-frag"] }/{ params_list["arbitrary-sampling-param"] }
+                pulse.default.tlength   = { params_list["pulse-default-tlength"] }/{ params_list["arbitrary-sampling-param"] }
+                pulse.min.quantum       = { params_list["pulse-min-quantum"] }/{ params_list["arbitrary-sampling-param"] }
+                pulse.idle.timeout      = { params_list["pulse-idle-timeout"] }
+                pulse.default.format    = { params_list["pulse-default-format"] }
+                pulse.default.position  = { params_list["pulse-default-position"] }
         }}
         """
         return template
+
+
+def CreateConfigFilePipeWireJack(params_list:dict):
+        template = f"""
+        jack.properties = {{
+                node.latency    = { params_list["node.latency"] }/{ params_list["arbitrary-sampling-param"] }
+                node.rate       = { params_list["node.rate"] }/{ params_list["arbitrary-sampling-param"] }
+                node.lock-quantum  = { params_list["node.lock-quantum"] }
+                node.force-quantum = { params_list["node.force-quantum"] }
+                jack.show-monitor  = { params_list["jack.show-monitor"] }
+                jack.merge-monitor = { params_list["jack.merge-monitor"] }
+                jack.show-midi     = { params_list["jack.show-midi"] }
+                jack.short-name    = { params_list["jack.short-name"] }
+                jack.filter-name   = { params_list["jack.filter-name"] }
+                jack.filter-char   = { params_list["jack.filter-char"] }
+                jack.self-connect-mode  = { params_list["jack.self-connect-mode"] }
+                jack.locked-process     = { params_list["jack.locked-process"] }
+                jack.default-as-system  = { params_list["jack.default-as-system"] }
+                jack.fix-midi-events    = { params_list["jack.fix-midi-events"] }
+                jack.global-buffer-size = { params_list["jack.global-buffer-size"] }
+                jack.max-client-ports   = { params_list["jack.max-client-ports"] }
+                jack.fill-aliases       = { params_list["jack.fill-aliases"] }
+                jack.writable-input     = { params_list["jack.writable-input"] }
+        }}
+        """
+        return template
+
+def CreateConfigFilePipeWireClients(params_list:dict):
+        template = f"""
+        stream.properties = {{
+                node.latency          = { params_list['node.latency']}
+                node.autoconnect      = { params_list['node.autoconnect']}
+                resample.quality      = { params_list['resample.quality']}
+                channelmix.normalize  = { params_list['channelmix.normalize']}
+                channelmix.mix-lfe    = { params_list['channelmix.mix-lfe']}
+                channelmix.upmix      = { params_list['channelmix.upmix']}
+                channelmix.upmix-method = { params_list['channelmix.upmix-method']}
+                channelmix.lfe-cutoff = { params_list['channelmix.lfe-cutoff']}
+                channelmix.fc-cutoff  = { params_list['channelmix.fc-cutoff']}
+                channelmix.rear-delay = { params_list['channelmix.rear-delay']}
+                channelmix.stereo-widen = { params_list['channelmix.stereo-widen']}
+                channelmix.hilbert-taps = { params_list['channelmix.hilbert-taps']}
+                dither.noise = { params_list['dither.noise']}
+        }}
+
+        
+        alsa.properties = {{
+                alsa.deny = {params_list['alsa.deny']}
+                alsa.format = [ {params_list['alsa.format']} ]
+                alsa.rate = {{ {params_list['alsa.rate']} }}
+                alsa.channels = {{ {params_list['alsa.channels']} }}
+                alsa.period-bytes = {{ {params_list['alsa.period-bytes']} }}
+                alsa.buffer-bytes = {{ {params_list['alsa.buffer-bytes']} }}
+                alsa.volume-method = {params_list['alsa.volume-method']}
+        }}
+
+        """
+        return template
+
+
 
 
         #os.path.isfile( home_path + '/.config/pipewire/pipewire-pulse.conf')

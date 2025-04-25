@@ -84,3 +84,29 @@ def RestartPWServices():
         os.popen('systemctl --user restart pipewire-jack')
 
 
+def RemoveOverrideProperties(proprties_list):
+    """
+    Removes VM properties so those not overwrite standard ones
+    """
+    if proprties_list.count('vm.overrides = {')>0 :
+        rsi_s = proprties_list.index('vm.overrides = {')
+        rsi_e = proprties_list.index('}')
+
+        del proprties_list[rsi_s:rsi_e+1]
+
+def ParsePropertiesIntoDict(properites_list):
+    return dict( list(map(str.strip,propert.split('='))) for propert in properites_list if len(propert.split('=')) > 1 )
+
+def strtobool(val):
+    """Convert a string representation of truth to true (1) or false (0).
+    True values are 'y', 'yes', 't', 'true', 'on', and '1'; false values
+    are 'n', 'no', 'f', 'false', 'off', and '0'.  Raises ValueError if
+    'val' is anything else.
+    """
+    val = val.lower()
+    if val in ('y', 'yes', 't', 'true', 'on', '1'):
+        return 1
+    elif val in ('n', 'no', 'f', 'false', 'off', '0'):
+        return 0
+    else:
+        raise ValueError("invalid truth value %r" % (val,))

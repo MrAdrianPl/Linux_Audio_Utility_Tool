@@ -1,0 +1,72 @@
+version: 1
+
+
+script:
+  # Remove any previous build
+  - rm -rf AppDir  | true
+  # Make usr and icons dirs
+  - mkdir -p AppDir/usr/src
+  - mkdir -p AppDir/usr/share/icons/hicolor/256x256/apps
+  # Copy the python application code into the AppDir
+  - cp laut_main.py AppDir/usr/src -r
+  - cp laut_events.py AppDir/usr/src -r
+  - cp laut_gui_templates.py AppDir/usr/src -r
+  - cp laut_files_handling.py AppDir/usr/src -r
+  - cp laut_functions.py AppDir/usr/src -r
+  - cp laut_text.py AppDir/usr/src -r
+  - cp styles.css AppDir/usr/src -r
+  - cp LAUT_Logo.png AppDir/usr/share/icons/hicolor/256x256/apps -r
+  - apt-get update && apt-get install -y --no-install-recommends squashfs-tools
+  
+AppDir:
+  path: AppDir
+  app_info:
+    id: LAUT
+    name: LAUT
+    icon: LAUT_Logo
+    version: V10
+    # Set the python executable as entry point
+    exec: usr/bin/python3
+    # Set the application main script path as argument. Use '$@' to forward CLI parameters
+    exec_args: "$APPDIR/usr/src/laut_main.py $@"
+
+  apt:
+    arch: amd64
+    sources:
+    allow_unauthenticated: true
+    sources:
+      - sourceline: deb http://mx.archive.ubuntu.com/ubuntu/ jammy main restricted universe multiverse
+      - sourceline: deb http://mx.archive.ubuntu.com/ubuntu/ jammy-updates main restricted universe multiverse
+      - sourceline: deb http://mx.archive.ubuntu.com/ubuntu/ jammy-backports main restricted universe multiverse
+      - sourceline: deb http://security.ubuntu.com/ubuntu jammy-security main restricted universe multiverse
+
+    include:
+      - python3
+      - python3-pkg-resources
+      - python3-idna 
+      - python3-requests
+      - python3-urllib3
+      - libfreetype6
+      - libfontconfig1
+    exclude:
+      - usr/share/man
+      - usr/share/doc/*/README.*
+      - usr/share/doc/*/changelog.*
+      - usr/share/doc/*/NEWS.*
+      - usr/share/doc/*/TODO.*
+
+  runtime:
+    version: "continuous"
+    env:
+      PATH: '${APPDIR}/usr/bin:${PATH}'
+      # Set python home
+      # See https://docs.python.org/3/using/cmdline.html#envvar-PYTHONHOME
+      PYTHONHOME: '${APPDIR}/usr'
+      # Path to the site-packages dir or other modules dirs
+      # See https://docs.python.org/3/using/cmdline.html#envvar-PYTHONPATH
+      PYTHONPATH: '${APPDIR}/usr/lib/python3.10/site-packages'
+
+AppImage:
+  arch: x86_64
+  sign-key: None
+
