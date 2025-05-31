@@ -2,8 +2,6 @@ version: 1
 
 
 script:
-  # Remove any previous build
-  - rm -rf AppDir  | true
   # Make usr and icons dirs
   - mkdir -p AppDir/usr/src
   - mkdir -p AppDir/usr/share/icons/hicolor/256x256/apps
@@ -69,4 +67,5 @@ AppDir:
 AppImage:
   arch: x86_64
   sign-key: None
+  file_name: 'LinuxAudioUtilityTool.AppImage'
 
